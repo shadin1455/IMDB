@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>IMDb Movie App</title>
+
+    <!-- ✅ Bootstrap CSS CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="container mt-4">
+
+    <h2 class="mb-4 text-primary">🎬 IMDb Movie App</h2>
+
+    <!-- Form to Add Movies (Using JavaScript) -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <input id="title" class="form-control" placeholder="Title">
+        </div>
+        <div class="col-md-3">
+            <input id="genre" class="form-control" placeholder="Genre">
+        </div>
+        <div class="col-md-2">
+            <input id="year" class="form-control" placeholder="Year">
+        </div>
+        <div class="col-md-2">
+            <button class="btn btn-success w-100" onclick="addMovie()">Add Movie (JS)</button>
+        </div>
+    </div>
+
+    <!-- Movies List (Loaded via JS) -->
+    <ul id="list" class="list-group mb-5"></ul>
+
+    <!-- Spring MVC Form to Add Movie (POST) -->
+    <form action="/add" method="post" class="mb-4">
+        <h5>Add Movie (Spring POST)</h5>
+        <div class="row g-2">
+            <div class="col-md-3">
+                <input type="text" class="form-control" name="title" placeholder="Title" required>
+            </div>
+            <div class="col-md-3">
+                <input type="text" class="form-control" name="genre" placeholder="Genre" required>
+            </div>
+            <div class="col-md-2">
+                <input type="number" class="form-control" name="year" placeholder="Year" required>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">Add Movie</button>
+            </div>
+        </div>
+    </form>
+
+    <!-- Server-Side Movie List -->
+    <ul class="list-group">
+        <li class="list-group-item d-flex justify-content-between align-items-center"
+            th:each="movie : ${movies}">
+            <span>
+                <strong th:text="${movie.title}"></strong> -
+                <span th:text="${movie.genre}"></span> -
+                <span th:text="${movie.year}"></span>
+            </span>
+            <a th:href="@{/delete(id=${movie.id})}" class="btn btn-danger btn-sm">Delete</a>
+        </li>
+    </ul>
+
+    <!-- ✅ Bootstrap JS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- JavaScript to Fetch Movie List and Add/Delete -->
+    <script>
+        const url = "http://localhost:9091/movies";
+
+        function addMovie() {
+            fetch(`${url}/add`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    title: document.getElementById('title').value,
+                    genre: document.getElementById('genre').value,
+                    year: document.getElementById('year').value
+                })
+            }).then(() => loadMovies());
+        }
+
+        function deleteMovie(id) {
+            fetch(`${url}/delete/${id}`, { method: 'DELETE' })
+                .then(() => loadMovies());
+        }
+
+        function loadMovies() {
+            fetch(`${url}/list`)
+                .then(res => res.json())
+                .then(data => {
+                    const ul = document.getElementById('list');
+                    ul.innerHTML = '';
+                    data.forEach(movie => {
+                        const li = document.createElement('li');
+                        li.className = "list-group-item d-flex justify-content-between align-items-center";
+                        li.innerHTML = `${movie.title} (${movie.year}) - ${movie.genre}
+                            <button class="btn btn-danger btn-sm" onclick="deleteMovie(${movie.id})">Delete</button>`;
+                        ul.appendChild(li);
+                    });
+                });
+        }
+
+        loadMovies();
+    </script>
+</body>
+</html>
